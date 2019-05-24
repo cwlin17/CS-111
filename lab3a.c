@@ -13,6 +13,8 @@ int blockSize;
 
 struct ext2_super_block superBlock;
 struct ext2_group_desc groupDesc;
+struct ext2_inode inode;
+struct ext2_dir_entry dirEntry;
 
 int main(int argc, char* argv[]){
   if(argc != 2){
@@ -58,8 +60,6 @@ int main(int argc, char* argv[]){
     inodesPerGroup = totalInodes;
   }
 
-  // # free blocks, # free inodes, block # of free block bitmap, block # of free inode bitmap
-  // block # of first block of inodes
   printf("GROUP,0,%d,%d,%d,%d,%d,%d,%d\n", blocksPerGroup, inodesPerGroup, groupDesc.bg_free_blocks_count, 
 	 groupDesc.bg_free_inodes_count, groupDesc.bg_block_bitmap, groupDesc.bg_inode_bitmap,
 	 groupDesc.bg_inode_table);
