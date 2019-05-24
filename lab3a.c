@@ -66,6 +66,7 @@ int main(int argc, char* argv[]){
 	 groupDesc.bg_free_inodes_count, groupDesc.bg_block_bitmap, groupDesc.bg_inode_bitmap,
 	 groupDesc.bg_inode_table);
 
+
   /////////////////////////////////////////////////////////////////
   //Find free blocks with bit map
   __u8 blockMapByte;
@@ -80,5 +81,7 @@ int main(int argc, char* argv[]){
       }
     }
   }
+
+
   exit(0);
 }
