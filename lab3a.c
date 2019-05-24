@@ -15,6 +15,8 @@ struct ext2_super_block superBlock;
 struct ext2_group_desc groupDesc;
 
 int main(int argc, char* argv[]){
+  int i = 0;
+  int j = 0;
   if(argc != 2){
     fprintf(stderr, "Wrong number of arguments.\n");
     exit(1);
@@ -78,7 +80,7 @@ int main(int argc, char* argv[]){
   for(; i < readBytes; i++){
     char c = inodeBits[i];
     for(; j < 8; j++){
-      if(c & (1 << j) == 0){
+      if((c & (1 << j)) == 0){
 	printf("IFREE,%d\n", (i * 8) + j + 1); // First bit represents 1st inode
       }
     }
