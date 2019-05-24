@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "ext2_fs.h"
-
+#include <time.h>
 const int SUPER_BLOCK_OFFSET = 1024;
 int blockSize;
 
@@ -18,6 +18,15 @@ struct ext2_dir_entry dirEntry;
 
 int getOffset(int blockID){
   return SUPER_BLOCK_OFFSET + (blockID - 1) * blockSize;
+}
+//Converting epoch time source https://www.epochconverter.com/programming/c
+void getTime(__u32 epochTime){
+  time_t unconverted = epochTime;
+  struct tm ts;
+  char buf[80];
+  ts = *localtime(&unconverted);
+  strftime(buf, sizeof(buf), "%m/%d/%Y %H:%M:%S, GMT", &ts);
+  printf("%s", buf);
 }
 int main(int argc, char* argv[]){
   unsigned int i = 0;
@@ -83,7 +92,7 @@ int main(int argc, char* argv[]){
   }
   i = 0;
   j = 0;
-  for(; i < readBytes; i++){
+  for(; i < (unsigned int)readBytes; i++){
     char c = inodeBits[i];
     for(; j < 8; j++){
       if((c & (1 << j)) == 0){
@@ -102,7 +111,7 @@ int main(int argc, char* argv[]){
     int n = 0;
     for (; n < 8; n++){
       if ((blockMapByte & (1 << n)) == 0){
-	printf("BFREE, %i\n", i+n+1); //blocks start at 1 on map not 0 
+	printf("BFREE,%i\n", i+n+1); //blocks start at 1 on map not 0 
       }
     }
   }
@@ -118,7 +127,8 @@ int main(int argc, char* argv[]){
 
     __u16 i_modeVal = inodeEntry.i_mode;
     char fileType= 'n';
-    
+    //Time of last inode change (mm/dd/yy hh:mm:ss, GMT)
+
     if (i_modeVal & 0x8000)
       fileType = 'f';
     else if (i_modeVal & 0x4000)
@@ -131,6 +141,15 @@ int main(int argc, char* argv[]){
     printf("%d,", inodeEntry.i_uid); //Owner
     printf("%d,", inodeEntry.i_gid); //group
     printf("%d,", inodeEntry.i_links_count); //link count
+    //    getTime(inodeEntry.i_atime);
+    getTime(inodeEntry.i_ctime);
+    printf(",");
+    getTime(inodeEntry.i_mtime);
+    printf(",");
+    getTime(inodeEntry.i_atime);
+    printf(",");
+    printf("%d,", inodeEntry.i_size);
+    printf("%d", inodeEntry.i_blocks); //number of blocks to contain data of this inode
     printf("\n");
   }
 
