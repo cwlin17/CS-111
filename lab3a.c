@@ -17,6 +17,8 @@ struct ext2_inode inode;
 struct ext2_dir_entry dirEntry;
 
 int main(int argc, char* argv[]){
+  int i = 0;
+  int j = 0;
   if(argc != 2){
     fprintf(stderr, "Wrong number of arguments.\n");
     exit(1);
@@ -63,6 +65,30 @@ int main(int argc, char* argv[]){
   printf("GROUP,0,%d,%d,%d,%d,%d,%d,%d\n", blocksPerGroup, inodesPerGroup, groupDesc.bg_free_blocks_count, 
 	 groupDesc.bg_free_inodes_count, groupDesc.bg_block_bitmap, groupDesc.bg_inode_bitmap,
 	 groupDesc.bg_inode_table);
+
+  /************ Free Inode Entries *************/
+  int readBytes = inodesPerGroup / 8;
+  // Read one extra byte if number of bits isn't a multiple of 8
+  if(inodesPerGroup % 8 != 0){
+    readBytes += 1;
+  }
+  char inodeBits[readBytes];
+  if(pread(fd, &inodeBits, readBytes, groupDesc.bg_inode_bitmap) == -1){
+    fprintf(stderr, "Error reading from file descriptor.\n");
+    exit(2);
+  }
+  i = 0;
+  j = 0;
+  for(; i < readBytes; i++){
+    char c = inodeBits[i];
+    for(; j < 8; j++){
+      if((c & (1 << j)) == 0){
+	printf("IFREE,%d\n", (i * 8) + j + 1); // First bit represents 1st inode
+      }
+    }
+  }
+  
+  //printf("IFREE,%d\n", );
 
   exit(0);
 }
