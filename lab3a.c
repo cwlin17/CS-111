@@ -16,6 +16,9 @@ struct ext2_group_desc groupDesc;
 struct ext2_inode inode;
 struct ext2_dir_entry dirEntry;
 
+int getOffset(int blockID){
+  return SUPER_BLOCK_OFFSET + (blockID - 1) * blockSize;
+}
 int main(int argc, char* argv[]){
   unsigned int i = 0;
   unsigned int j = 0;
@@ -89,7 +92,7 @@ int main(int argc, char* argv[]){
   i = 0;
   struct ext2_inode inodeEntry;
   for (; i < superBlock.s_inodes_per_group; i++){ //For each inode in table
-    pread(fd, &inodeEntry, sizeof(inodeEntry), i*sizeof(inodeEntry) + SUPER_BLOCK_OFFSET + blockSize * 4); //How come groupDesc.bg_inode_bitmap
+    pread(fd, &inodeEntry, sizeof(inodeEntry), i*sizeof(inodeEntry) + getOffset(groupDesc.bg_inode_table)); //How come groupDesc.bg_inode_bitmap
 
     __u16 i_modeVal = inodeEntry.i_mode;
     char fileType= 'n';
