@@ -47,6 +47,9 @@ int main(int argc, char* argv[]){
   printf("SUPERBLOCK,%d,%d,%d,%d,%d,%d,%d\n", superBlock.s_blocks_count, superBlock.s_inodes_count, blockSize, 
 	 superBlock.s_inode_size, superBlock.s_blocks_per_group, superBlock.s_inodes_per_group, superBlock.s_first_ino);
 
+  /////////////////////////////////////////////
+  /*************** Group *********************/ 
+  /////////////////////////////////////////////
   // Getting group descriptor table information
   if(pread(fd, &groupDesc, sizeof(groupDesc), SUPER_BLOCK_OFFSET + blockSize) == -1){
     fprintf(stderr, "Error reading from file descriptor.\n");
@@ -71,8 +74,11 @@ int main(int argc, char* argv[]){
 	 groupDesc.bg_free_inodes_count, groupDesc.bg_block_bitmap, groupDesc.bg_inode_bitmap,
 	 groupDesc.bg_inode_table);
 
+  ///////////////////////////////////////////////
   /************ Free Inode Entries *************/
+  ///////////////////////////////////////////////
   int readBytes = inodesPerGroup / 8;
+  int countInodes = 0;
   // Read one extra byte if number of bits isn't a multiple of 8
   if(inodesPerGroup % 8 != 0){
     readBytes += 1;
@@ -83,10 +89,15 @@ int main(int argc, char* argv[]){
     exit(2);
   }
   i = 0;
-  for(; i < readBytes; i++){
+  for(; i < (unsigned int)readBytes; i++){
     char c = inodeBytes[i];
     j = 0;
     for(; j < 8; j++){
+      countInodes += 1;
+      // Don't read more bits than there are inodes
+      if(countInodes > inodesPerGroup){
+	break;
+      }
       if((c & (1 << j)) == 0){
 	printf("IFREE,%d\n", (i * 8) + j + 1); // First bit represents 1st inode
       }
