@@ -17,8 +17,8 @@ struct ext2_inode inode;
 struct ext2_dir_entry dirEntry;
 
 int main(int argc, char* argv[]){
-  int i = 0;
-  int j = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
   if(argc != 2){
     fprintf(stderr, "Wrong number of arguments.\n");
     exit(1);
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
   __u8 blockMapByte;
   i = 0;
   j = 0;
-  for (; i < blocksPerGroup; j++, i += 8) { //For each block
+  for (; i < (unsigned int)blocksPerGroup; j++, i += 8) { //For each block
     pread(fd, &blockMapByte, 1, (EXT2_MIN_BLOCK_SIZE << superBlock.s_log_block_size) * groupDesc.bg_block_bitmap + j);
     int n = 0;
     for (; n < 8; n++){
@@ -82,6 +82,31 @@ int main(int argc, char* argv[]){
     }
   }
 
+  ///////////////////////////////////////////////////////////////////
+  //Looking at the Inode Table
+  //  printf("This is the inode:%i\n", groupDesc.bg_inode_table);
+  // printf("This is the calculated:%lu\n", SUPER_BLOCK_OFFSET + blockSize * 4);
+  i = 0;
+  struct ext2_inode inodeEntry;
+  for (; i < superBlock.s_inodes_per_group; i++){ //For each inode in table
+    pread(fd, &inodeEntry, sizeof(inodeEntry), i*sizeof(inodeEntry) + SUPER_BLOCK_OFFSET + blockSize * 4); //How come groupDesc.bg_inode_bitmap
 
+    __u16 i_modeVal = inodeEntry.i_mode;
+    char fileType= 'n';
+    
+    if (i_modeVal & 0x8000)
+      fileType = 'f';
+    else if (i_modeVal & 0x4000)
+      fileType = 'd';
+    else if (i_modeVal & 0xA000)
+      fileType = 's';
+    printf("INODE,%i,", i+1);
+    printf("%c,", fileType);
+    printf("%o,", i_modeVal & 0XFFF); //Mode
+    printf("%d,", inodeEntry.i_uid); //Owner
+    printf("%d,", inodeEntry.i_gid); //group
+    printf("%d,", inodeEntry.i_links_count); //link count
+    printf("\n");
+  }
   exit(0);
 }
