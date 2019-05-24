@@ -12,6 +12,7 @@ const int SUPER_BLOCK_OFFSET = 1024;
 int blockSize;
 
 struct ext2_super_block superBlock;
+struct ext2_group_desc groupDesc;
 
 int main(int argc, char* argv[]){
   if(argc != 2){
@@ -26,7 +27,7 @@ int main(int argc, char* argv[]){
   }
 
   // Getting superblock information
-  if(pread(fd, superBlock, sizeof(superBlock), SUPER_BLOCK_OFFSET) == -1){
+  if(pread(fd, &superBlock, sizeof(superBlock), SUPER_BLOCK_OFFSET) == -1){
     fprintf(stderr, "Error reading from file descriptor.\n");
     exit(2);
   }
@@ -36,6 +37,32 @@ int main(int argc, char* argv[]){
 
   printf("SUPERBLOCK,%d,%d,%d,%d,%d,%d,%d\n", superBlock.s_blocks_count, superBlock.s_inodes_count, blockSize, 
 	 superBlock.s_inode_size, superBlock.s_blocks_per_group, superBlock.s_inodes_per_group, superBlock.s_first_ino);
+
+  // Getting group descriptor table information
+  if(pread(fd, &groupDesc, sizeof(groupDesc), SUPER_BLOCK_OFFSET + blockSize) == -1){
+    fprintf(stderr, "Error reading from file descriptor.\n");
+    exit(2);
+  } 
+
+  // Calculating # of blocks in group assuming there's only 1 group
+  int blocksPerGroup = superBlock.s_blocks_per_group;
+  int totalBlocks = superBlock.s_blocks_count;
+  if(blocksPerGroup > totalBlocks){
+    blocksPerGroup = totalBlocks;
+  }
+
+  // Calculating # of inodes in groups assuming there's only 1 group
+  int inodesPerGroup = superBlock.s_inodes_per_group;
+  int totalInodes = superBlock.s_inodes_count;
+  if(inodesPerGroup > totalInodes){
+    inodesPerGroup = totalInodes;
+  }
+
+  // # free blocks, # free inodes, block # of free block bitmap, block # of free inode bitmap
+  // block # of first block of inodes
+  printf("GROUP,0,%d,%d,%d,%d,%d,%d,%d\n", blocksPerGroup, inodesPerGroup, groupDesc.bg_free_blocks_count, 
+	 groupDesc.bg_free_inodes_count, groupDesc.bg_block_bitmap, groupDesc.bg_inode_bitmap,
+	 groupDesc.bg_inode_table);
 
   exit(0);
 }
