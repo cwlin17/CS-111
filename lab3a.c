@@ -19,6 +19,7 @@ struct ext2_dir_entry dirEntry;
 int getOffset(int blockID){
   return SUPER_BLOCK_OFFSET + (blockID - 1) * blockSize;
 }
+
 int main(int argc, char* argv[]){
   unsigned int i = 0;
   unsigned int j = 0;
@@ -76,15 +77,15 @@ int main(int argc, char* argv[]){
   if(inodesPerGroup % 8 != 0){
     readBytes += 1;
   }
-  char inodeBits[readBytes];
-  if(pread(fd, &inodeBits, readBytes, groupDesc.bg_inode_bitmap) == -1){
-    fprintf(stderr, "Error reading from file descriptor.\n");
+  char inodeBytes[readBytes];
+  if(pread(fd, &inodeBytes, readBytes, getOffset(groupDesc.bg_inode_bitmap)) == -1){
+    fprintf(stderr, "Error reading from file descriptoy.\n");
     exit(2);
   }
   i = 0;
-  j = 0;
   for(; i < readBytes; i++){
-    char c = inodeBits[i];
+    char c = inodeBytes[i];
+    j = 0;
     for(; j < 8; j++){
       if((c & (1 << j)) == 0){
 	printf("IFREE,%d\n", (i * 8) + j + 1); // First bit represents 1st inode
