@@ -54,7 +54,7 @@ void directoryEntry(int parentInode, int blockNumber){
 
 // Printing out indirect block reference information
 void printIndirect(int inodeNumber, int level, int offset, int indirectBlock, int referencedBlock){
-  printf("INDIRECT,%d,%d,%d,%d,%d\n", inodeNumber, level, offsest, indirectBlock, referencedBlock);
+  printf("INDIRECT,%d,%d,%d,%d,%d\n", inodeNumber, level, offset, indirectBlock, referencedBlock);
 }
 
 int main(int argc, char* argv[]){
@@ -204,10 +204,40 @@ int main(int argc, char* argv[]){
     }
     printf("%u", inodeEntry.i_block[14]);
     printf("\n");
-    // Directory entry information
-
   }
+
   i = 0;
+  for(; i < (unsigned int)inodesPerGroup; i++){
+    pread(fd, &inodeEntry, sizeof(inodeEntry), i*sizeof(inodeEntry) + getOffset(groupDesc.bg_inode_table)); //How come groupDesc.bg_inode_bitmap    
+    // Don't do anything for inodes that aren't allocated
+    if(inodeEntry.i_mode == 0){
+      continue;
+    }
+    if(inodeEntry.i_links_count == 0){
+      continue;
+    }
+
+    __u16 i_modeVal = inodeEntry.i_mode;
+    char fileType= 'n';
+    //Time of last inode change (mm/dd/yy hh:mm:ss, GMT)
+    if (i_modeVal & 0x8000)
+      fileType = 'f';
+    else if (i_modeVal & 0x4000)
+      fileType = 'd';
+    else if (i_modeVal & 0xA000)
+      fileType = 's';
+    
+    // Directory entry information
+    if(fileType == 'd'){
+      j = 0;
+      // Direct blocks
+      for(; j < 12; j++){
+        directoryEntry(i+1, inodeEntry.i_block[j]);
+      }
+    }
+  }
+
+  /*  i = 0;
   for(; i < (unsigned int)inodesPerGroup; i++){
     pread(fd, &inodeEntry, sizeof(inodeEntry), i*sizeof(inodeEntry) + getOffset(groupDesc.bg_inode_table)); //How come groupDesc.bg_inode_bitmap
     
@@ -228,16 +258,7 @@ int main(int argc, char* argv[]){
       fileType = 'd';
     else if (i_modeVal & 0xA000)
       fileType = 's';
-    
-    if(fileType == 'd'){
-      j = 0;
-      // Direct blocks
-      for(; j < 12; j++){
-        directoryEntry(i+1, inodeEntry.i_block[j]);
-      }
-<<<<<<< HEAD
-    }
-
+ 
     // Checking single indirect block
     if(inodeEntry.i_block[12] != 0){
       uint32_t indirectPointers[blockSize];
@@ -251,14 +272,10 @@ int main(int argc, char* argv[]){
 	if(fileType == 'd'){
 	  directoryEntry(i+1, indirectPointers[j]);
 	}
-	printIndirect(i+1, 1, 
 	j++;
       }
     }
-=======
-    }    
->>>>>>> 553a988040532e7689f9397e8e6131b34ad4a789
-  }
+    }*/
 
   exit(0);
 }
