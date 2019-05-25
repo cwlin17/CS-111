@@ -27,8 +27,8 @@ void getTime(__u32 epochTime){
   time_t unconverted = epochTime;
   struct tm ts;
   char buf[80];
-  ts = *localtime(&unconverted);
-  strftime(buf, sizeof(buf), "%m/%d/%Y %H:%M:%S, GMT", &ts);
+  ts = *gmtime(&unconverted);
+  strftime(buf, sizeof(buf), "%m/%d/%Y %H:%M:%S", &ts);
   printf("%s", buf);
 }
 
@@ -190,7 +190,6 @@ int main(int argc, char* argv[]){
     printf("%d,", inodeEntry.i_uid); //Owner
     printf("%d,", inodeEntry.i_gid); //group
     printf("%d,", inodeEntry.i_links_count); //link count
-    //    getTime(inodeEntry.i_atime);
     getTime(inodeEntry.i_ctime);
     printf(",");
     getTime(inodeEntry.i_mtime);
@@ -199,15 +198,44 @@ int main(int argc, char* argv[]){
     printf(",");
     printf("%d,", inodeEntry.i_size);
     printf("%d", inodeEntry.i_blocks); //number of blocks to contain data of this inode
+    j = 0;
+    for (; j < 14; j++){
+      printf("%u,", inodeEntry.i_block[j]);
+    }
+    printf("%u", inodeEntry.i_block[14]);
     printf("\n");
-
     // Directory entry information
+
+  }
+  i = 0;
+  for(; i < (unsigned int)inodesPerGroup; i++){
+    pread(fd, &inodeEntry, sizeof(inodeEntry), i*sizeof(inodeEntry) + getOffset(groupDesc.bg_inode_table)); //How come groupDesc.bg_inode_bitmap
+    
+    // Don't do anything for inodes that aren't allocated
+    if(inodeEntry.i_mode == 0){
+      continue;
+    }
+    if(inodeEntry.i_links_count == 0){
+      continue;
+    }
+
+    __u16 i_modeVal = inodeEntry.i_mode;
+    char fileType= 'n';
+    //Time of last inode change (mm/dd/yy hh:mm:ss, GMT)
+    if (i_modeVal & 0x8000)
+      fileType = 'f';
+    else if (i_modeVal & 0x4000)
+      fileType = 'd';
+    else if (i_modeVal & 0xA000)
+      fileType = 's';
+    
     if(fileType == 'd'){
       j = 0;
       // Direct blocks
       for(; j < 12; j++){
         directoryEntry(i+1, inodeEntry.i_block[j]);
       }
+<<<<<<< HEAD
     }
 
     // Checking single indirect block
@@ -227,6 +255,9 @@ int main(int argc, char* argv[]){
 	j++;
       }
     }
+=======
+    }    
+>>>>>>> 553a988040532e7689f9397e8e6131b34ad4a789
   }
 
   exit(0);
