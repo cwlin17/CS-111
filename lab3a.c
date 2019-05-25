@@ -8,7 +8,9 @@
 #include <unistd.h>
 #include "ext2_fs.h"
 #include <time.h>
+
 const int SUPER_BLOCK_OFFSET = 1024;
+int fd;
 int blockSize;
 
 struct ext2_super_block superBlock;
@@ -30,6 +32,26 @@ void getTime(__u32 epochTime){
   printf("%s", buf);
 }
 
+// Printing out directory entry information
+void directoryEntry(int parentInode, int blockNumber){
+  // Only print things out if the directory inode is valid
+  if(blockNumber == 0){
+    return;
+  }
+  int i = 0;
+  while(i < blockSize){
+    if(pread(fd, &dirEntry, sizeof(dirEntry), getOffset(blockNumber) + i) == -1){
+      fprintf(stderr, "Error reading from file descriptor.\n");
+      exit(2);
+    }
+    if(dirEntry.inode != 0){
+      printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", parentInode, i, dirEntry.inode, dirEntry.rec_len, dirEntry.name_len, dirEntry.name);
+    }
+    // Move to next directory entry
+    i += dirEntry.rec_len;
+  }
+}
+
 int main(int argc, char* argv[]){
   unsigned int i = 0;
   unsigned int j = 0;
@@ -39,7 +61,7 @@ int main(int argc, char* argv[]){
     exit(1);
   }
 
-  int fd = open(argv[1], O_RDONLY);
+  fd = open(argv[1], O_RDONLY);
   if(fd == -1){
     fprintf(stderr, "Error opening file.\n");
     exit(2);
@@ -95,7 +117,7 @@ int main(int argc, char* argv[]){
   }
   char inodeBytes[readBytes];
   if(pread(fd, &inodeBytes, readBytes, getOffset(groupDesc.bg_inode_bitmap)) == -1){
-    fprintf(stderr, "Error reading from file descriptoy.\n");
+    fprintf(stderr, "Error reading from file descriptor.\n");
     exit(2);
   }
   i = 0;
@@ -135,19 +157,28 @@ int main(int argc, char* argv[]){
   // printf("This is the calculated:%lu\n", SUPER_BLOCK_OFFSET + blockSize * 4);
   i = 0;
   struct ext2_inode inodeEntry;
-  for (; i < superBlock.s_inodes_per_group; i++){ //For each inode in table
+  for(; i < (unsigned int)inodesPerGroup; i++){
+    //for (; i < superBlock.s_inodes_per_group; i++){ //For each inode in table
     pread(fd, &inodeEntry, sizeof(inodeEntry), i*sizeof(inodeEntry) + getOffset(groupDesc.bg_inode_table)); //How come groupDesc.bg_inode_bitmap
+
+    // Don't do anything for inodes that aren't allocated
+    if(inodeEntry.i_mode == 0){
+      continue;
+    }
+    if(inodeEntry.i_links_count == 0){
+      continue;
+    }
 
     __u16 i_modeVal = inodeEntry.i_mode;
     char fileType= 'n';
     //Time of last inode change (mm/dd/yy hh:mm:ss, GMT)
-
     if (i_modeVal & 0x8000)
       fileType = 'f';
     else if (i_modeVal & 0x4000)
       fileType = 'd';
     else if (i_modeVal & 0xA000)
       fileType = 's';
+
     printf("INODE,%i,", i+1);
     printf("%c,", fileType);
     printf("%o,", i_modeVal & 0XFFF); //Mode
@@ -164,6 +195,15 @@ int main(int argc, char* argv[]){
     printf("%d,", inodeEntry.i_size);
     printf("%d", inodeEntry.i_blocks); //number of blocks to contain data of this inode
     printf("\n");
+
+    // Directory entry information
+    if(fileType == 'd'){
+      j = 0;
+      // Direct blocks
+      for(; j < 12; j++){
+        directoryEntry(i+1, inodeEntry.i_block[j]);
+      }
+    }
   }
 
   exit(0);

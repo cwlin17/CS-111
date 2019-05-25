@@ -3,7 +3,7 @@
 # ID: 804984337
 
 default:
-	gcc -o lab3a lab3a.c -Wall -Wextra
+	gcc -o lab3a lab3a.c -Wall -Wextra -g
 
 dist:
 	tar -czvf lab3a-804984337.tar.gz lab3a.c README Makefile
