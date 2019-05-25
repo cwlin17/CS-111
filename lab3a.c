@@ -52,6 +52,11 @@ void directoryEntry(int parentInode, int blockNumber){
   }
 }
 
+// Printing out indirect block reference information
+void printIndirect(int inodeNumber, int level, int offset, int indirectBlock, int referencedBlock){
+  printf("INDIRECT,%d,%d,%d,%d,%d\n", inodeNumber, level, offsest, indirectBlock, referencedBlock);
+}
+
 int main(int argc, char* argv[]){
   unsigned int i = 0;
   unsigned int j = 0;
@@ -202,6 +207,24 @@ int main(int argc, char* argv[]){
       // Direct blocks
       for(; j < 12; j++){
         directoryEntry(i+1, inodeEntry.i_block[j]);
+      }
+    }
+
+    // Checking single indirect block
+    if(inodeEntry.i_block[12] != 0){
+      uint32_t indirectPointers[blockSize];
+      int limit = blockSize / sizeof(uint32_t);
+      if(pread(fd, &indirectPointers, blockSize, getOffset(inodeEntry.i_block[12])) == -1){
+	fprintf(stderr, "Error reading from file descriptor.\n");
+	exit(2);
+      }
+      j = 0;
+      while(j < limit){
+	if(fileType == 'd'){
+	  directoryEntry(i+1, indirectPointers[j]);
+	}
+	printIndirect(i+1, 1, 
+	j++;
       }
     }
   }
