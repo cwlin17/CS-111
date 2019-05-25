@@ -27,8 +27,8 @@ void getTime(__u32 epochTime){
   time_t unconverted = epochTime;
   struct tm ts;
   char buf[80];
-  ts = *localtime(&unconverted);
-  strftime(buf, sizeof(buf), "%m/%d/%Y %H:%M:%S, GMT", &ts);
+  ts = *gmtime(&unconverted);
+  strftime(buf, sizeof(buf), "%m/%d/%Y %H:%M:%S", &ts);
   printf("%s", buf);
 }
 
@@ -185,7 +185,6 @@ int main(int argc, char* argv[]){
     printf("%d,", inodeEntry.i_uid); //Owner
     printf("%d,", inodeEntry.i_gid); //group
     printf("%d,", inodeEntry.i_links_count); //link count
-    //    getTime(inodeEntry.i_atime);
     getTime(inodeEntry.i_ctime);
     printf(",");
     getTime(inodeEntry.i_mtime);
@@ -194,8 +193,12 @@ int main(int argc, char* argv[]){
     printf(",");
     printf("%d,", inodeEntry.i_size);
     printf("%d", inodeEntry.i_blocks); //number of blocks to contain data of this inode
+    j = 0;
+    for (; j < 14; j++){
+      printf("%u,", inodeEntry.i_block[j]);
+    }
+    printf("%u", inodeEntry.i_block[14]);
     printf("\n");
-
     // Directory entry information
     if(fileType == 'd'){
       j = 0;
