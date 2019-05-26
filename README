@@ -1,5 +1,16 @@
 NAME: Don Le, Carol Lin
+EMAIL: donle22599@g.ucla.edu, carol9gmail@yahoo.com
+ID: 804971410, 804984337
 
-Research:
-     https://www.epochconverter.com/programming/c
-     Used to convert epoch time.
+Files:
+
+README - contains description of submitted files
+Makefile - contains targets for building the program, the tar ball, and cleaning
+lab3a.c - contains the source code for the program that analyzes the file system
+ext2_fs.h - header file that defines the format of the EXT2 file system
+
+Sources:
+Converting epoch time https://www.epochconverter.com/programming/c
+Information on file systems http://www.nongnu.org/ext2-doc/ext2.html#i-block
+General guidance on the project: TA's slides
+
