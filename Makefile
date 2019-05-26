@@ -1,6 +1,6 @@
-# NAME: Carol Lin
-# EMAIL: carol9gmail@yahoo.com
-# ID: 804984337
+# NAME: Carol Lin, Don Le
+# EMAIL: carol9gmail@yahoo.com, donle22599@g.ucla.edu
+# ID: 804984337, 804971410
 
 default:
 	gcc -o lab3a lab3a.c -Wall -Wextra -g
