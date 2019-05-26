@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "ext2_fs.h"
 #include <time.h>
+#include <stdint.h>
 
 const int SUPER_BLOCK_OFFSET = 1024;
 int fd;
@@ -17,6 +18,7 @@ struct ext2_super_block superBlock;
 struct ext2_group_desc groupDesc;
 struct ext2_inode inode;
 struct ext2_dir_entry dirEntry;
+struct ext2_inode inodeEntry;
 
 int getOffset(int blockID){
   return SUPER_BLOCK_OFFSET + (blockID - 1) * blockSize;
@@ -56,6 +58,48 @@ void directoryEntry(int parentInode, int blockNumber){
 void printIndirect(int inodeNumber, int level, int offset, int indirectBlock, int referencedBlock){
   printf("INDIRECT,%d,%d,%d,%d,%d\n", inodeNumber, level, offset, indirectBlock, referencedBlock);
 }
+
+void indirection(int inodeNumber, int level, char fileType){
+  int ind = level + 11;
+
+  if(inodeEntry.i_block[ind] != 0){
+    uint32_t indirectPointers[blockSize];
+    int limit = blockSize / sizeof(uint32_t);
+    if(pread(fd, &indirectPointers, blockSize, getOffset(inodeEntry.i_block[ind])) == -1){
+      fprintf(stderr, "Error reading from file descriptor.\n");
+      exit(2);
+    }
+    int j = 0;
+    while(j < limit){
+      if(fileType == 'd'){
+	directoryEntry(inodeNumber, indirectPointers[j]);
+      }
+      if(indirectPointers[j] != 0){
+	printIndirect(inodeNumber, level, j+12, inodeEntry.i_block[ind], indirectPointers[j]);
+      }
+      j++;
+    }
+  }
+}
+
+/*void findBlock(int offset, int level, int index, int blockNum, int inodeNum, char fileType){
+  // Find # entries per block
+  int numEntries;
+  if(level == 1){
+    uint32_t pointers[blockSize];
+    numEntries = blockSize / sizeof(uint32_t);
+    pread(fd, &pointers, blockSize, offset);
+    printIndirect(inodeNum, level, offset, index + 12, inodeEntry.i_block[);
+  }
+  if(level == 2){
+    uint32_t indirectPointers[blockSize];
+    numEntries = blockSize / sizeof(uint32_t);    
+    int i = 0;
+    while(i < numEntries){
+      findBlock((offset + i * numEntries * blockSize), 1, i
+    }
+  }
+  }*/
 
 int main(int argc, char* argv[]){
   unsigned int i = 0;
@@ -161,7 +205,6 @@ int main(int argc, char* argv[]){
   //  printf("This is the inode:%i\n", groupDesc.bg_inode_table);
   // printf("This is the calculated:%lu\n", SUPER_BLOCK_OFFSET + blockSize * 4);
   i = 0;
-  struct ext2_inode inodeEntry;
   for(; i < (unsigned int)inodesPerGroup; i++){
     //for (; i < superBlock.s_inodes_per_group; i++){ //For each inode in table
     pread(fd, &inodeEntry, sizeof(inodeEntry), i*sizeof(inodeEntry) + getOffset(groupDesc.bg_inode_table)); //How come groupDesc.bg_inode_bitmap
@@ -237,7 +280,7 @@ int main(int argc, char* argv[]){
     }
   }
 
-  /*  i = 0;
+  i = 0;
   for(; i < (unsigned int)inodesPerGroup; i++){
     pread(fd, &inodeEntry, sizeof(inodeEntry), i*sizeof(inodeEntry) + getOffset(groupDesc.bg_inode_table)); //How come groupDesc.bg_inode_bitmap
     
@@ -258,24 +301,9 @@ int main(int argc, char* argv[]){
       fileType = 'd';
     else if (i_modeVal & 0xA000)
       fileType = 's';
- 
-    // Checking single indirect block
-    if(inodeEntry.i_block[12] != 0){
-      uint32_t indirectPointers[blockSize];
-      int limit = blockSize / sizeof(uint32_t);
-      if(pread(fd, &indirectPointers, blockSize, getOffset(inodeEntry.i_block[12])) == -1){
-	fprintf(stderr, "Error reading from file descriptor.\n");
-	exit(2);
-      }
-      j = 0;
-      while(j < limit){
-	if(fileType == 'd'){
-	  directoryEntry(i+1, indirectPointers[j]);
-	}
-	j++;
-      }
-    }
-    }*/
+
+    indirection(i+1, 1, fileType);
+  }
 
   exit(0);
 }
