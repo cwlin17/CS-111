@@ -220,12 +220,12 @@ int main(int argc, char* argv[]){
     __u16 i_modeVal = inodeEntry.i_mode;
     char fileType= 'n';
     //Time of last inode change (mm/dd/yy hh:mm:ss, GMT)
-    if (i_modeVal & 0x8000)
-      fileType = 'f';
+    if (i_modeVal & 0x8000 && (i_modeVal & 0x2000))
+      fileType = 's';
     else if (i_modeVal & 0x4000)
       fileType = 'd';
-    else if (i_modeVal & 0xA000)
-      fileType = 's';
+    else if (i_modeVal & 0x8000)
+      fileType = 'f';
 
     printf("INODE,%i,", i+1);
     printf("%c,", fileType);
@@ -240,15 +240,17 @@ int main(int argc, char* argv[]){
     getTime(inodeEntry.i_atime);
     printf(",");
     printf("%d,", inodeEntry.i_size);
-    printf("%d,", inodeEntry.i_blocks); //number of blocks to contain data of this inode
-    if ((fileType == 'd' || fileType == 'f') || (fileType == 's' && (60 > inodeEntry.i_size))){
+
+    if ((fileType == 'd' || fileType == 'f') || (60 <= inodeEntry.i_size)){
+      printf("%d,", inodeEntry.i_blocks); //number of blocks to contain data of this inode
       j = 0;
       for (; j < 14; j++){
 	printf("%u,", inodeEntry.i_block[j]);
       }
       printf("%u", inodeEntry.i_block[14]);
     }
-
+    else
+      printf("%d", inodeEntry.i_blocks); //number of blocks to contain data of this inode
     printf("\n");
   }
 
@@ -266,12 +268,12 @@ int main(int argc, char* argv[]){
     __u16 i_modeVal = inodeEntry.i_mode;
     char fileType= 'n';
     //Time of last inode change (mm/dd/yy hh:mm:ss, GMT)
-    if (i_modeVal & 0x8000)
-      fileType = 'f';
+    if (i_modeVal & 0x8000  && (i_modeVal & 0x2000))
+      fileType = 's';
     else if (i_modeVal & 0x4000)
       fileType = 'd';
-    else if (i_modeVal & 0xA000)
-      fileType = 's';
+    else if (i_modeVal & 0x8000)
+      fileType = 'f';
     
     // Directory entry information
     if(fileType == 'd'){
@@ -298,12 +300,12 @@ int main(int argc, char* argv[]){
     __u16 i_modeVal = inodeEntry.i_mode;
     char fileType= 'n';
     //Time of last inode change (mm/dd/yy hh:mm:ss, GMT)
-    if (i_modeVal & 0x8000)
-      fileType = 'f';
+    if (i_modeVal & 0x8000  && (i_modeVal & 0x2000))
+      fileType = 's';
     else if (i_modeVal & 0x4000)
       fileType = 'd';
-    else if (i_modeVal & 0xA000)
-      fileType = 's';
+    else if (i_modeVal & 0x8000)
+      fileType = 'f';
 
     //indirection(i+1, 1, fileType);
 
