@@ -1,6 +1,6 @@
-// NAME: Carol Lin
-// EMAIL: carol9gmail@yahoo.com
-// ID: 804984337
+// NAME: Don Le, Carol Lin
+// EMAIL: donle22599@g.ucla.edu, carol9gmail@yahoo.com
+// ID: 804971410, 804984337
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,7 +24,7 @@ int getOffset(int blockID){
   return SUPER_BLOCK_OFFSET + (blockID - 1) * blockSize;
 }
 
-//Converting epoch time source https://www.epochconverter.com/programming/c
+//Converting epoch time 
 void getTime(__u32 epochTime){
   time_t unconverted = epochTime;
   struct tm ts;
@@ -313,6 +313,7 @@ int main(int argc, char* argv[]){
 	exit(2);
       }
       j = 0;
+      // Iterating through each data block
       while(j < limit){
 	if(fileType == 'd'){
 	  directoryEntry(i+1, indirectPointers[j]);
@@ -331,6 +332,7 @@ int main(int argc, char* argv[]){
 	exit(2);
       }
       j = 0;
+      // Iterating through pointers to single indirect blocks
       while(j < limit){
 	uint32_t indirectPointers2[blockSize];
 	if(pread(fd, &indirectPointers2, blockSize, getOffset(indirectPointers[j])) == -1){
@@ -340,6 +342,7 @@ int main(int argc, char* argv[]){
 	if(indirectPointers[j] != 0){	
 	  printIndirect(i+1, 2, 12 + 256 + j, inodeEntry.i_block[13], indirectPointers[j]);
 	}
+	// Iterating through data blocks
 	unsigned int k = 0;
 	while(k < limit){
 	  if(fileType == 'd'){
@@ -359,6 +362,43 @@ int main(int argc, char* argv[]){
       if(pread(fd, &indirectPointers, blockSize, getOffset(inodeEntry.i_block[14])) == -1){
 	fprintf(stderr, "Error reading from file descriptor.\n");
 	exit(2);
+      }
+      j = 0;
+      // Iterating through pointers to double indirect blocks
+      while(j < limit){
+	uint32_t indirectPointers2[blockSize];
+	if(pread(fd, &indirectPointers2, blockSize, getOffset(indirectPointers[j])) == -1){
+	  fprintf(stderr, "Error reading from file descriptor.\n");
+	  exit(2);
+	}
+	if(indirectPointers[j] != 0){
+	  printIndirect(i+1, 3, 12 + 256*256 + 256 + j, inodeEntry.i_block[14], indirectPointers[j]);
+	}
+	// Iterating through pointers is single indirect blocks
+	unsigned int k = 0;
+	while(k < limit){
+	  uint32_t indirectPointers3[blockSize];
+	  if(pread(fd, &indirectPointers3, blockSize, getOffset(indirectPointers2[k])) == -1){
+	    fprintf(stderr, "Error reading from file descriptor.\n");
+	    exit(2);
+	  }
+	  if(indirectPointers2[k] != 0){
+	    printIndirect(i+1, 2, 12 + 256*256 + 256 + k, indirectPointers[j], indirectPointers2[k]);
+	  }
+	  // Iterating through data blocks
+	  unsigned int m = 0;
+	  while(m < limit){
+	    if(fileType == 'd'){
+	      directoryEntry(i+1, indirectPointers3[m]);
+	    }
+	    if(indirectPointers3[m] != 0){
+	      printIndirect(i+1, 1, 12 + 256*256 + 256 + m, indirectPointers2[k], indirectPointers3[m]);
+	    }
+	    m++;
+	  }
+	  k++;
+	}
+	j++;
       }
     }
   }
