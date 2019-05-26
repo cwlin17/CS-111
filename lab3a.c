@@ -30,7 +30,7 @@ void getTime(__u32 epochTime){
   struct tm ts;
   char buf[80];
   ts = *gmtime(&unconverted);
-  strftime(buf, sizeof(buf), "%m/%d/%Y %H:%M:%S", &ts);
+  strftime(buf, sizeof(buf), "%D %H:%M:%S", &ts);
   printf("%s", buf);
 }
 
@@ -240,12 +240,15 @@ int main(int argc, char* argv[]){
     getTime(inodeEntry.i_atime);
     printf(",");
     printf("%d,", inodeEntry.i_size);
-    printf("%d", inodeEntry.i_blocks); //number of blocks to contain data of this inode
-    j = 0;
-    for (; j < 14; j++){
-      printf("%u,", inodeEntry.i_block[j]);
+    printf("%d,", inodeEntry.i_blocks); //number of blocks to contain data of this inode
+    if ((fileType == 'd' || fileType == 'f') || (fileType == 's' && (60 > inodeEntry.i_size))){
+      j = 0;
+      for (; j < 14; j++){
+	printf("%u,", inodeEntry.i_block[j]);
+      }
+      printf("%u", inodeEntry.i_block[14]);
     }
-    printf("%u", inodeEntry.i_block[14]);
+    //    printf("%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u",inodeEntry.i_block[0],inodeEntry.i_block[1],inodeEntry.i_block[2],inodeEntry.i_block[3],inodeEntry.i_block[4],inodeEntry.i_block[5],inodeEntry.i_block[6],inodeEntry.i_block[7],inodeEntry.i_block[8],inodeEntry.i_block[9],inodeEntry.i_block[10],inodeEntry.i_block[11],inodeEntry.i_block[12],inodeEntry.i_block[13],inodeEntry.i_block[14]);
     printf("\n");
   }
 
