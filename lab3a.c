@@ -220,7 +220,7 @@ int main(int argc, char* argv[]){
     __u16 i_modeVal = inodeEntry.i_mode;
     char fileType= 'n';
     //Time of last inode change (mm/dd/yy hh:mm:ss, GMT)
-    if (i_modeVal & 0x8000 && (i_modeVal & 0x2000))
+    if (i_modeVal & 0x8000 && (i_modeVal & 0x2000)) //Symbolic links have 10100.... so check for both 1's
       fileType = 's';
     else if (i_modeVal & 0x4000)
       fileType = 'd';
@@ -268,7 +268,7 @@ int main(int argc, char* argv[]){
     __u16 i_modeVal = inodeEntry.i_mode;
     char fileType= 'n';
     //Time of last inode change (mm/dd/yy hh:mm:ss, GMT)
-    if (i_modeVal & 0x8000  && (i_modeVal & 0x2000))
+    if (i_modeVal & 0x8000  && (i_modeVal & 0x2000))//Symbolic links have 101000... so check for both 1's
       fileType = 's';
     else if (i_modeVal & 0x4000)
       fileType = 'd';
