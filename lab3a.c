@@ -302,7 +302,65 @@ int main(int argc, char* argv[]){
     else if (i_modeVal & 0xA000)
       fileType = 's';
 
-    indirection(i+1, 1, fileType);
+    //indirection(i+1, 1, fileType);
+
+    uint32_t indirectPointers[blockSize];
+    unsigned int limit = blockSize / sizeof(uint32_t);
+    // Single indirect
+    if(inodeEntry.i_block[12] != 0){
+      if(pread(fd, &indirectPointers, blockSize, getOffset(inodeEntry.i_block[12])) == -1){
+	fprintf(stderr, "Error reading from file descriptor.\n");
+	exit(2);
+      }
+      j = 0;
+      while(j < limit){
+	if(fileType == 'd'){
+	  directoryEntry(i+1, indirectPointers[j]);
+	}
+	if(indirectPointers[j] != 0){
+	  printIndirect(i+1, 1, j+12, inodeEntry.i_block[12], indirectPointers[j]);
+	}
+	j++;
+      }
+    }
+
+    // Double indirect
+    if(inodeEntry.i_block[13] != 0){
+      if(pread(fd, &indirectPointers, blockSize, getOffset(inodeEntry.i_block[13])) == -1){
+	fprintf(stderr, "Error reading from file descriptor.\n");
+	exit(2);
+      }
+      j = 0;
+      while(j < limit){
+	uint32_t indirectPointers2[blockSize];
+	if(pread(fd, &indirectPointers2, blockSize, getOffset(indirectPointers[j])) == -1){
+	  fprintf(stderr, "Error reading from file descriptor.\n");
+	  exit(2);
+	}
+	if(indirectPointers[j] != 0){	
+	  printIndirect(i+1, 2, 12 + 256 + j, inodeEntry.i_block[13], indirectPointers[j]);
+	}
+	unsigned int k = 0;
+	while(k < limit){
+	  if(fileType == 'd'){
+	    directoryEntry(i+1, indirectPointers2[k]);
+	  }
+	  if(indirectPointers2[k] != 0){
+	    printIndirect(i+1, 1, 12 + 256 + k, indirectPointers[j], indirectPointers2[k]);
+	  }
+	  k++;
+	}
+	j++;
+      }
+    }
+
+    // Triple indirect
+    if(inodeEntry.i_block[14] != 0){
+      if(pread(fd, &indirectPointers, blockSize, getOffset(inodeEntry.i_block[14])) == -1){
+	fprintf(stderr, "Error reading from file descriptor.\n");
+	exit(2);
+      }
+    }
   }
 
   exit(0);
