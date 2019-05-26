@@ -248,7 +248,7 @@ int main(int argc, char* argv[]){
       }
       printf("%u", inodeEntry.i_block[14]);
     }
-    //    printf("%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u",inodeEntry.i_block[0],inodeEntry.i_block[1],inodeEntry.i_block[2],inodeEntry.i_block[3],inodeEntry.i_block[4],inodeEntry.i_block[5],inodeEntry.i_block[6],inodeEntry.i_block[7],inodeEntry.i_block[8],inodeEntry.i_block[9],inodeEntry.i_block[10],inodeEntry.i_block[11],inodeEntry.i_block[12],inodeEntry.i_block[13],inodeEntry.i_block[14]);
+
     printf("\n");
   }
 
